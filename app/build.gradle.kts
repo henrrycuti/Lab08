@@ -1,6 +1,9 @@
 plugins {
-    alias(libs.plugins.android.application)
+    id("com.android.application")
+    id("org.jetbrains.kotlin.android")
     alias(libs.plugins.kotlin.compose)
+    id("kotlin-kapt") // Añadir esta línea
+
 }
 
 android {
@@ -35,7 +38,16 @@ android {
     }
 }
 
+val room_version = "2.6.1"
+
 dependencies {
+    implementation("androidx.room:room-runtime:$room_version")
+    kapt("androidx.room:room-compiler:$room_version")
+
+// Agrega la dependencia de room-ktx para soporte de corrutinas
+    implementation("androidx.room:room-ktx:$room_version")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:$room_version")
+
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material3)
