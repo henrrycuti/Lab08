@@ -38,7 +38,13 @@ android {
     }
 }
 
-val room_version = "2.6.1"
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
+    }
+}
+
+val room_version = "2.8.4"
 
 dependencies {
     implementation("androidx.room:room-runtime:$room_version")
