@@ -1,9 +1,12 @@
 package com.codelabs.lab08
 
+import android.Manifest
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -13,9 +16,15 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.room.Room
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
+import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.launch
 import com.codelabs.lab08.ui.theme.Lab08Theme
 
@@ -23,6 +32,21 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        val permissionLauncher = registerForActivityResult(
+            ActivityResultContracts.RequestPermission()
+        ) { }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+
+        val reminder = PeriodicWorkRequestBuilder<TaskReminderWorker>(1, TimeUnit.DAYS).build()
+        WorkManager.getInstance(applicationContext).enqueueUniquePeriodicWork(
+            "task_reminder",
+            ExistingPeriodicWorkPolicy.KEEP,
+            reminder
+        )
 
         val db = Room.databaseBuilder(
             applicationContext,
@@ -46,6 +70,7 @@ class MainActivity : ComponentActivity() {
 fun TaskScreen(viewModel: TaskViewModel) {
     val tasks by viewModel.tasks.collectAsState()
     val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
     var newTaskDescription by remember { mutableStateOf("") }
     var filter by remember { mutableStateOf("Todas") }
 
@@ -137,9 +162,19 @@ fun TaskScreen(viewModel: TaskViewModel) {
             }
         }
 
+        OutlinedButton(
+            onClick = {
+                WorkManager.getInstance(context)
+                    .enqueue(OneTimeWorkRequestBuilder<TaskReminderWorker>().build())
+            },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Probar notificación")
+        }
+
         Button(
             onClick = { coroutineScope.launch { viewModel.deleteAllTasks() } },
-            modifier = Modifier.fillMaxWidth().padding(top = 16.dp)
+            modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
         ) {
             Text("Eliminar todas las tareas")
         }
