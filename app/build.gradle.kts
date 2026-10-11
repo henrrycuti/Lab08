@@ -47,6 +47,8 @@ kotlin {
 val room_version = "2.8.4"
 
 dependencies {
+    implementation("androidx.compose.material:material-icons-core")
+
     implementation("androidx.room:room-runtime:$room_version")
     kapt("androidx.room:room-compiler:$room_version")
 
